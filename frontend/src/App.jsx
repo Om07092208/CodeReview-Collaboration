@@ -11,11 +11,11 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { PullRequestPage } from "./pages/PullRequestPage";
 import { useAuth } from "./context/AuthContext";
 import { pageTransition } from "./animations/pageTransitions";
-import { useSocket } from "./hooks/useSocket"; 
-import CodeCollabPage from "./pages/CodeCollabPage"; 
-import CollabWorkspace from "./pages/CollabWorkspace"; 
-import { CollabInviteModal } from "./components/CollabInviteModal"; 
-import HandDraw from "./pages/games/HandDraw"; 
+import { useSocket } from "./hooks/useSocket";
+import CodeCollabPage from "./pages/CodeCollabPage";
+import CollabWorkspace from "./pages/CollabWorkspace";
+import { CollabInviteModal } from "./components/CollabInviteModal";
+import HandDraw from "./pages/games/HandDraw";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -28,64 +28,123 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
   const { user } = useAuth();
   const navigate = useNavigate();
   const socket = useSocket(!!user);
-  const [inviteData, setInviteData] = useState({ isOpen: false, inviterName: "", roomId: "", inviterSocketId: "" });
+  const [inviteData, setInviteData] = useState({
+    isOpen: false,
+    inviterName: "",
+    roomId: "",
+    inviterSocketId: "",
+  });
 
-useEffect(() => {
-  if (!user || !socket) return;
+  useEffect(() => {
+    if (!user || !socket) return;
 
-  // ✅ Register user ONLY after socket connects
-  const handleConnect = () => {
-    console.log("✅ Socket connected:", socket.id);
-    socket.emit("register-user", String(user._id));
-  };
+    const registerUser = () => {
+      console.log("✅ Registering user:", user._id);
+      socket.emit("register-user", String(user._id));
+    };
 
-  socket.on("connect", handleConnect);
+    // ✅ If already connected
+    if (socket.connected) {
+      registerUser();
+    }
 
-  // ✅ When invite is received
-  socket.on("receive-invite", ({ roomId, inviterName, inviterSocketId }) => {
-    setInviteData({
-      isOpen: true,
-      inviterName,
-      roomId,
-      inviterSocketId,
+    // ✅ On future connect/reconnect
+    socket.on("connect", registerUser);
+
+    // ✅ Receive invite
+    socket.on("receive-invite", ({ roomId, inviterName, inviterSocketId }) => {
+      setInviteData({
+        isOpen: true,
+        inviterName,
+        roomId,
+        inviterSocketId,
+      });
     });
-  });
 
-  // ✅ When invite accepted
-  socket.on("invite-accepted", ({ roomId }) => {
-    navigate(`/code-collab/${roomId}`);
-  });
+    // ✅ Invite accepted
+    socket.on("invite-accepted", ({ roomId }) => {
+      navigate(`/code-collab/${roomId}`);
+    });
 
-  return () => {
-    socket.off("connect", handleConnect);
-    socket.off("receive-invite");
-    socket.off("invite-accepted");
-  };
-}, [user, socket, navigate]);
+    return () => {
+      socket.off("connect", registerUser);
+      socket.off("receive-invite");
+      socket.off("invite-accepted");
+    };
+  }, [user, socket, navigate]);
+
   return (
     <>
-      <CollabInviteModal 
+      <CollabInviteModal
         isOpen={inviteData.isOpen}
         inviterName={inviteData.inviterName}
         onAccept={() => {
-          socket.emit("accept-invite", { roomId: inviteData.roomId, inviterSocketId: inviteData.inviterSocketId });
-          setInviteData(prev => ({ ...prev, isOpen: false }));
-          navigate(`/code-collab/${inviteData.roomId}`); 
+          socket.emit("accept-invite", {
+            roomId: inviteData.roomId,
+            inviterSocketId: inviteData.inviterSocketId,
+          });
+          setInviteData((prev) => ({ ...prev, isOpen: false }));
+          navigate(`/code-collab/${inviteData.roomId}`);
         }}
-        onDecline={() => setInviteData(prev => ({ ...prev, isOpen: false }))}
+        onDecline={() =>
+          setInviteData((prev) => ({ ...prev, isOpen: false }))
+        }
       />
-      <AppShell notifications={notifications} theme={theme} onToggleTheme={onToggleTheme} searchableItems={searchableItems}>
+
+      <AppShell
+        notifications={notifications}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        searchableItems={searchableItems}
+      >
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage onSearchIndex={onSearchIndex} onNotify={onNotify} />} />
-          <Route path="/pull-requests" element={<GlobalPullRequestsPage onSearchIndex={onSearchIndex} />} />
-          <Route path="/reviews" element={<GlobalReviewsPage onSearchIndex={onSearchIndex} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                onSearchIndex={onSearchIndex}
+                onNotify={onNotify}
+              />
+            }
+          />
+          <Route
+            path="/pull-requests"
+            element={<GlobalPullRequestsPage onSearchIndex={onSearchIndex} />}
+          />
+          <Route
+            path="/reviews"
+            element={<GlobalReviewsPage onSearchIndex={onSearchIndex} />}
+          />
           <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/code-collab" element={<CodeCollabPage socket={socket} />} />
-          <Route path="/code-collab/:roomId" element={<CollabWorkspace socket={socket} />} />
+          <Route
+            path="/code-collab"
+            element={<CodeCollabPage socket={socket} />}
+          />
+          <Route
+            path="/code-collab/:roomId"
+            element={<CollabWorkspace socket={socket} />}
+          />
           <Route path="/games/gesture-draw" element={<HandDraw />} />
-          <Route path="/projects/:projectId" element={<ProjectPage theme={theme} onNotify={onNotify} onSearchIndex={onSearchIndex} />} />
-          <Route path="/projects/:projectId/pull-requests/:pullRequestId" element={<PullRequestPage authUser={user} onNotify={onNotify} />} />
+          <Route
+            path="/projects/:projectId"
+            element={
+              <ProjectPage
+                theme={theme}
+                onNotify={onNotify}
+                onSearchIndex={onSearchIndex}
+              />
+            }
+          />
+          <Route
+            path="/projects/:projectId/pull-requests/:pullRequestId"
+            element={
+              <PullRequestPage
+                authUser={user}
+                onNotify={onNotify}
+              />
+            }
+          />
         </Routes>
       </AppShell>
     </>
@@ -105,19 +164,32 @@ export default function App() {
   }, [theme]);
 
   const onNotify = useCallback((n) => {
-    setNotifications(c => [n, ...c]);
-    setTimeout(() => setNotifications(c => c.filter(e => e.id !== n.id)), 4000);
+    setNotifications((c) => [n, ...c]);
+    setTimeout(() => setNotifications((c) => c.filter((e) => e.id !== n.id)), 4000);
   }, []);
 
   const onSearchIndex = useCallback((i) => {
-    setSearchableItems(c => {
+    setSearchableItems((c) => {
       const merged = [...c, ...i];
-      const unique = new Map(merged.map(item => [`${item.type}-${item.id}`, item]));
+      const unique = new Map(
+        merged.map((item) => [`${item.type}-${item.id}`, item])
+      );
       return Array.from(unique.values());
     });
   }, []);
 
-  const shellProps = useMemo(() => ({ theme, onToggleTheme: () => setTheme(c => (c === "dark" ? "light" : "dark")), notifications, searchableItems, onSearchIndex, onNotify }), [notifications, searchableItems, theme]);
+  const shellProps = useMemo(
+    () => ({
+      theme,
+      onToggleTheme: () =>
+        setTheme((c) => (c === "dark" ? "light" : "dark")),
+      notifications,
+      searchableItems,
+      onSearchIndex,
+      onNotify,
+    }),
+    [notifications, searchableItems, theme]
+  );
 
   return (
     <>
@@ -126,7 +198,14 @@ export default function App() {
         <motion.div key={user ? "app" : "auth"} {...pageTransition}>
           <Routes>
             <Route path="/auth/:mode" element={<AuthPage />} />
-            <Route path="/*" element={<ProtectedRoute><ProtectedLayout {...shellProps} /></ProtectedRoute>} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <ProtectedLayout {...shellProps} />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </motion.div>
       </AnimatePresence>
