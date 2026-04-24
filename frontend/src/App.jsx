@@ -40,16 +40,22 @@ console.log("USER FULL DATA:", JSON.stringify(user, null, 2));
   useEffect(() => {
     if (!socket) return;
 
-    const registerUser = () => {
-      if (!user || !user._id) {
-        console.log("❌ User ID not ready yet");
-        return;
-      }
+    const registerUser = () => {  
+  const userId =
+  user?._id ||
+  user?.id ||
+  user?.userId ||
+  user?.data?._id ||
+  user?.data?.id;
 
-      console.log("✅ Registering user:", user._id);
+if (!userId) {
+  console.log("❌ No valid user ID found:", user);
+  return;
+}
 
-      setTimeout(() => {
-        socket.emit("register-user", user._id);
+console.log("✅ FINAL USER ID:", userId);
+
+socket.emit("register-user", userId);
       }, 500);
     };
 
