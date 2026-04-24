@@ -5,13 +5,15 @@ export const useSocket = (enabled = true) => {
   const socket = useMemo(() => {
     if (!enabled) return null;
 
-    const url = import.meta.env.VITE_API_URL; // ✅ FIXED
+    const url = import.meta.env.VITE_API_URL;
 
     console.log("🔌 Socket connecting to:", url);
 
     return io(url, {
-      transports: ["websocket"],
-      withCredentials: true
+      transports: ["websocket", "polling"], // ✅ FIXED
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
     });
   }, [enabled]);
 
