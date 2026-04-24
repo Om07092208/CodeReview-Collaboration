@@ -30,26 +30,38 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
   const socket = useSocket(!!user);
   const [inviteData, setInviteData] = useState({ isOpen: false, inviterName: "", roomId: "", inviterSocketId: "" });
 
-  useEffect(() => {
-    if (user && socket) {
-      socket.emit("register-user", String(user._id));
+useEffect(() => {
+  if (!user || !socket) return;
 
-      socket.on("receive-invite", ({ roomId, inviterName, inviterSocketId }) => {
-        setInviteData({ isOpen: true, inviterName, roomId, inviterSocketId });
-      });
+  // ✅ Register user ONLY after socket connects
+  const handleConnect = () => {
+    console.log("✅ Socket connected:", socket.id);
+    socket.emit("register-user", String(user._id));
+  };
 
-      socket.on("invite-accepted", ({ roomId }) => {
-        navigate(`/code-collab/${roomId}`);
-      });
-    }
-    return () => {
-      if (socket) {
-        socket.off("receive-invite");
-        socket.off("invite-accepted");
-      }
-    };
-  }, [user, socket, navigate]);
+  socket.on("connect", handleConnect);
 
+  // ✅ When invite is received
+  socket.on("receive-invite", ({ roomId, inviterName, inviterSocketId }) => {
+    setInviteData({
+      isOpen: true,
+      inviterName,
+      roomId,
+      inviterSocketId,
+    });
+  });
+
+  // ✅ When invite accepted
+  socket.on("invite-accepted", ({ roomId }) => {
+    navigate(`/code-collab/${roomId}`);
+  });
+
+  return () => {
+    socket.off("connect", handleConnect);
+    socket.off("receive-invite");
+    socket.off("invite-accepted");
+  };
+}, [user, socket, navigate]);
   return (
     <>
       <CollabInviteModal 
