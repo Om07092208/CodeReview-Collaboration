@@ -45,9 +45,12 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
   }
 
   console.log("✅ Registering user:", user._id);
-  socket.emit("register-user", user._id);
-};
 
+  // 🔥 ADD SMALL DELAY (VERY IMPORTANT FOR RENDER)
+  setTimeout(() => {
+    socket.emit("register-user", user._id);
+  }, 500);
+};
     // ✅ If already connected
     if (socket.connected) {
       registerUser();
