@@ -20,7 +20,7 @@ import HandDraw from "./pages/games/HandDraw";
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="grid min-h-screen place-items-center text-slate-400">Loading...</div>;
-  if (!user) return <Navigate to="/auth/login" replace />;
+ if (!user && !loading) return <Navigate to="/auth/login" replace />;
   return children;
 };
 const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems, onSearchIndex, onNotify }) => {
