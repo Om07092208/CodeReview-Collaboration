@@ -23,7 +23,6 @@ const ProtectedRoute = ({ children }) => {
   if (!user) return <Navigate to="/auth/login" replace />;
   return children;
 };
-
 const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems, onSearchIndex, onNotify }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -36,7 +35,7 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
     inviterSocketId: "",
   });
 
-  // 🔥 FIXED SOCKET LOGIC
+  // ✅ MAIN SOCKET EFFECT
   useEffect(() => {
     if (!socket) return;
 
@@ -53,10 +52,7 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
       }, 500);
     };
 
-    // ✅ Run when user becomes available
     registerUser();
-
-    // ✅ Run on reconnect
     socket.on("connect", registerUser);
 
     socket.on("receive-invite", ({ roomId, inviterName, inviterSocketId }) => {
@@ -78,6 +74,19 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
       socket.off("invite-accepted");
     };
   }, [user?._id, socket, navigate]);
+
+  // ✅ SECOND FIX (CRITICAL)
+  useEffect(() => {
+    if (!socket) return;
+
+    if (user && user._id) {
+      console.log("🔥 User became available:", user._id);
+
+      setTimeout(() => {
+        socket.emit("register-user", user._id);
+      }, 500);
+    }
+  }, [user?._id, socket]);
 
   return (
     <>
