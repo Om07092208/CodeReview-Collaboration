@@ -38,10 +38,15 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
   useEffect(() => {
     if (!user || !socket) return;
 
-    const registerUser = () => {
-      console.log("✅ Registering user:", user._id);
-      socket.emit("register-user", String(user._id));
-    };
+   const registerUser = () => {
+  if (!user || !user._id) {
+    console.log("❌ User ID not ready yet");
+    return;
+  }
+
+  console.log("✅ Registering user:", user._id);
+  socket.emit("register-user", user._id);
+};
 
     // ✅ If already connected
     if (socket.connected) {
@@ -71,7 +76,7 @@ const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems,
       socket.off("receive-invite");
       socket.off("invite-accepted");
     };
-  }, [user, socket, navigate]);
+ }, [user?._id, socket, navigate]);
 
   return (
     <>
