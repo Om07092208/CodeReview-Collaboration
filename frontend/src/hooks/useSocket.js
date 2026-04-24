@@ -10,7 +10,7 @@ export const useSocket = (enabled = true) => {
     console.log("🔌 Socket connecting to:", url);
 
     return io(url, {
-      transports: ["websocket", "polling"], // ✅ FIXED
+      transports: ["polling", "websocket"], 
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
