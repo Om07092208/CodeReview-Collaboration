@@ -40,24 +40,18 @@ console.log("USER FULL DATA:", JSON.stringify(user, null, 2));
   useEffect(() => {
     if (!socket) return;
 
-    const registerUser = () => {  
-  const userId =
-  user?._id ||
-  user?.id ||
-  user?.userId ||
-  user?.data?._id ||
-  user?.data?.id;
+  const registerUser = () => {
+  const userId = user?.id;   // ✅ THIS IS YOUR REAL ID
 
-if (!userId) {
-  console.log("❌ No valid user ID found:", user);
-  return;
-}
+  if (!userId) {
+    console.log("❌ No valid user ID found:", user);
+    return;
+  }
 
-console.log("✅ FINAL USER ID:", userId);
+  console.log("✅ FINAL USER ID:", userId);
 
-socket.emit("register-user", userId);
-      }, 500);
-    };
+  socket.emit("register-user", userId);
+};
 
     registerUser();
     socket.on("connect", registerUser);
@@ -80,21 +74,7 @@ socket.emit("register-user", userId);
       socket.off("receive-invite");
       socket.off("invite-accepted");
     };
-  }, [user?._id, socket, navigate]);
-
-  // ✅ SECOND FIX (CRITICAL)
-  useEffect(() => {
-    if (!socket) return;
-
-    if (user && user._id) {
-      console.log("🔥 User became available:", user._id);
-
-      setTimeout(() => {
-        socket.emit("register-user", user._id);
-      }, 500);
-    }
-  }, [user?._id, socket]);
-
+}, [user?.id, socket, navigate]);
   return (
     <>
       <CollabInviteModal
