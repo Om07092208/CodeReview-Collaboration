@@ -3,33 +3,30 @@ import { io } from "socket.io-client";
 
 export const useSocket = (enabled = true) => {
   const socket = useMemo(() => {
-    if (!enabled) {
-      return null;
-    }
+    if (!enabled) return null;
 
-    // Grab the URL, but let's log it so we know EXACTLY where it's pointing
-    const url = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
-    console.log("🔌 React is attempting socket connection to:", url);
+    const url = import.meta.env.VITE_API_URL; // ✅ FIXED
+
+    console.log("🔌 Socket connecting to:", url);
 
     return io(url, {
-      transports: ["websocket"]
+      transports: ["websocket"],
+      withCredentials: true
     });
   }, [enabled]);
 
   useEffect(() => {
     if (!socket) return;
 
-    // Aggressive debugging listeners
     socket.on("connect", () => {
-      console.log("✅ Socket officially connected! ID:", socket.id);
+      console.log("✅ Socket connected:", socket.id);
     });
 
     socket.on("connect_error", (err) => {
-      console.error("❌ Socket connection error:", err.message);
+      console.error("❌ Socket error:", err.message);
     });
 
     return () => {
-      console.log("🔌 Disconnecting socket...");
       socket.disconnect();
     };
   }, [socket]);
