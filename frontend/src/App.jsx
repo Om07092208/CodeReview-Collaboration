@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }) => {
 };
 const ProtectedLayout = ({ theme, onToggleTheme, notifications, searchableItems, onSearchIndex, onNotify }) => {
   const { user } = useAuth();
-console.log("USER DATA:", user);
+console.log("USER FULL DATA:", JSON.stringify(user, null, 2));
   const navigate = useNavigate();
   const socket = useSocket(!!user);
 
